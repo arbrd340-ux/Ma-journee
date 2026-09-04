@@ -1,0 +1,1628 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Ma journée</title>
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Ma journée">
+<meta name="theme-color" content="#fbfbf9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14181f" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%23223046'/%3E%3Ccircle cx='90' cy='76' r='33' fill='%234f7b5e'/%3E%3Crect x='48' y='126' width='84' height='11' rx='5.5' fill='%23de8747'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --fond:#fbfbf9; --carte:#ffffff; --champ:#ffffff;
+    --texte:#223046; --gris:#8a8a82; --trait:#e7e6e0; --inerte:#ecebe5;
+    --sauge:#4f7b5e; --abricot:#de8747; --barre:rgba(251,251,249,.92);
+    --indigo:#5566b8; --azur:#2f8fb5; --prune:#96517a; --or:#c99a1f; --brique:#c0574a;
+    --accent:var(--sauge);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --fond:#14181f; --carte:#1c222c; --champ:#232a35;
+      --texte:#e9ebef; --gris:#9096a1; --trait:#2c3440; --inerte:#2c3440;
+      --sauge:#6fa07e; --abricot:#e8a165; --barre:rgba(20,24,31,.92);
+      --indigo:#8390de; --azur:#5cb3d6; --prune:#c07ba2; --or:#e0be5a; --brique:#e07f70;
+    }
+  }
+  body[data-onglet=journee]  {--accent:var(--sauge)}
+  body[data-onglet=routine]  {--accent:var(--brique)}
+  body[data-onglet=habitudes]{--accent:var(--indigo)}
+  body[data-onglet=suivi]    {--accent:var(--azur)}
+  body[data-onglet=semaine]  {--accent:var(--abricot)}
+  body[data-onglet=bilan]    {--accent:var(--prune)}
+
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0; background:var(--fond); color:var(--texte);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    -webkit-text-size-adjust:100%}
+  body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+
+  header{position:sticky; top:0; z-index:5; background:var(--barre);
+    backdrop-filter:blur(12px); padding:calc(env(safe-area-inset-top) + 10px) 12px 10px;
+    border-bottom:1px solid var(--trait)}
+  header::after{content:''; position:absolute; left:0; right:0; bottom:-1px; height:2px;
+    background:linear-gradient(90deg, var(--sauge), var(--indigo), var(--azur), var(--abricot), var(--prune))}
+  .jour{display:flex; align-items:center; gap:4px}
+  .jour>button{background:none; border:0; font-size:24px; color:var(--texte); padding:4px 10px; cursor:pointer}
+  .centre{flex:1; text-align:center; min-width:0}
+  .centre h1{margin:0; font-size:17px; font-weight:600; letter-spacing:-.2px}
+  .retour{font-size:12px; color:var(--sauge); background:none; border:0; padding:2px; cursor:pointer}
+  .reglages{background:none; border:0; font-size:19px; color:var(--gris); padding:4px 8px; cursor:pointer}
+
+  main{padding:14px}
+  .carte{background:var(--carte); border:1px solid var(--trait); border-radius:18px; padding:16px; margin-bottom:13px}
+  .carte{position:relative}
+  .carte h2{margin:0 0 12px; font-size:13px; font-weight:600; color:var(--accent);
+    display:flex; align-items:center; gap:7px}
+  .carte h2::before{content:''; width:7px; height:7px; border-radius:50%;
+    background:var(--accent); flex:0 0 7px}
+  .gros{font-size:22px; font-weight:600; letter-spacing:-.4px}
+  .vide{color:var(--gris); font-size:14px; line-height:1.5; margin:0 0 12px}
+  .entre{display:flex; align-items:center; justify-content:space-between; gap:10px}
+  .rangee{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+
+  .barre-p{height:8px; border-radius:99px; background:var(--inerte); overflow:hidden; margin-top:12px}
+  .barre-p span{display:block; height:100%; background:var(--accent); transition:width .3s}
+
+  .tache{display:flex; align-items:flex-start; gap:12px; padding:11px 0; border-top:1px solid var(--trait)}
+  .tache:first-of-type{border-top:0}
+  .coche{width:26px; height:26px; flex:0 0 26px; margin-top:1px; border-radius:50%;
+    border:2px solid var(--gris); background:none; color:#fff; font-size:14px; padding:0; cursor:pointer}
+  .coche.on{background:var(--accent); border-color:var(--accent)}
+  .tache .txt{flex:1; font-size:16px; line-height:1.35; text-align:left; background:none;
+    border:0; color:var(--texte); padding:0; font-family:inherit; cursor:pointer}
+  .tache.done .txt{text-decoration:line-through; color:var(--gris)}
+  .meta{font-size:12px; color:var(--abricot); margin-top:3px; display:flex; gap:8px; align-items:center}
+  .meta .rep{color:var(--gris)}
+
+  .semaine{display:flex; gap:5px; margin-bottom:12px}
+  .semaine>div{flex:1; text-align:center}
+  .semaine small{display:block; font-size:10px; color:var(--gris); margin-bottom:5px}
+  .pastille{width:22px; height:22px; border-radius:50%; background:var(--inerte); margin:0 auto}
+  .pastille.on{background:var(--accent)}
+  .pastille.actuel{box-shadow:0 0 0 2px var(--fond), 0 0 0 4px var(--abricot)}
+  .serie{font-size:12px; color:var(--abricot)}
+  .pion{width:34px; height:34px; border-radius:50%; border:1px solid var(--trait);
+    background:var(--champ); color:var(--gris); font-size:13px; font-weight:600;
+    font-family:inherit; cursor:pointer; padding:0}
+  .pion.on{background:var(--accent); border-color:var(--accent); color:#fff}
+  button.act:disabled{opacity:.4}
+  .fleche{background:none; border:0; color:var(--gris); font-size:11px; line-height:1.1;
+    padding:1px 4px; cursor:pointer}
+  .fleche:disabled{opacity:.25}
+  .etiq{font-size:11px; padding:3px 9px; border-radius:99px;
+    background:color-mix(in srgb, var(--accent) 15%, transparent); color:var(--accent)}
+
+  button.act{border:0; border-radius:12px; padding:10px 15px; font-size:14px; font-weight:500;
+    background:var(--texte); color:var(--fond); cursor:pointer; font-family:inherit}
+  button.act.on{background:var(--accent); color:#fff}
+  button.mini{border:1px solid var(--trait); background:var(--champ); border-radius:11px;
+    padding:9px 13px; font-size:14px; color:var(--texte); cursor:pointer; font-family:inherit}
+  button.mini.on{border-color:var(--accent); color:var(--accent); background:color-mix(in srgb, var(--accent) 12%, transparent)}
+  .suppr{background:none; border:0; color:var(--gris); font-size:20px; padding:2px 4px; cursor:pointer}
+
+  .humeurs{display:flex}
+  .humeurs button{flex:1; background:none; border:0; font-size:29px; padding:6px 0; cursor:pointer; opacity:.32; border-radius:14px}
+  .humeurs.vierge button{opacity:1}
+  .humeurs button.on{opacity:1; background:var(--inerte)}
+
+  input[type=range]{width:100%; accent-color:var(--accent)}
+  .compteur{display:flex; align-items:center; gap:16px}
+  .compteur button{width:38px; height:38px; border-radius:50%; border:1px solid var(--trait);
+    background:var(--champ); font-size:20px; color:var(--texte); cursor:pointer}
+  .etoiles{display:flex}
+  .etoiles button{flex:1; background:none; border:0; font-size:26px; padding:4px 0; cursor:pointer; color:var(--inerte)}
+  .etoiles button.on{color:var(--or)}
+
+  .ligne{display:flex; justify-content:space-between; font-size:15px; padding:6px 0}
+  .ligne span:first-child{color:var(--gris)}
+
+  textarea,input[type=text],input[type=time],input[type=date],select{width:100%; font-family:inherit;
+    font-size:16px; color:var(--texte); border:1px solid var(--trait); border-radius:12px;
+    padding:11px; background:var(--champ); resize:none; -webkit-appearance:none}
+  textarea{min-height:112px; line-height:1.45}
+  label.champ{display:block; font-size:13px; color:var(--gris); margin:14px 0 6px}
+
+  .histo{display:flex; align-items:flex-end; gap:6px; height:96px; margin-bottom:8px}
+  .histo>div{flex:1; display:flex; flex-direction:column; justify-content:flex-end; height:100%}
+  .histo .col{background:var(--accent); border-radius:6px 6px 0 0; min-height:3px}
+  .histo .col.creux{background:var(--inerte)}
+  .jours{display:flex; gap:6px}
+  .jours>div{flex:1; text-align:center; font-size:10px; color:var(--gris)}
+
+  nav{position:fixed; left:0; right:0; bottom:0; display:flex; background:var(--barre);
+    backdrop-filter:blur(12px); border-top:1px solid var(--trait);
+    padding-bottom:env(safe-area-inset-bottom); z-index:6}
+  nav button{flex:1; background:none; border:0; padding:9px 1px 7px; color:var(--gris);
+    font-size:9.5px; font-family:inherit; cursor:pointer; display:flex; flex-direction:column;
+    align-items:center; gap:3px}
+  nav button svg{width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:1.8;
+    stroke-linecap:round; stroke-linejoin:round}
+  nav button.on{color:var(--accent)}
+  nav button[data-onglet=journee].on  {color:var(--sauge)}
+  nav button[data-onglet=routine].on  {color:var(--brique)}
+  nav button[data-onglet=habitudes].on{color:var(--indigo)}
+  nav button[data-onglet=suivi].on    {color:var(--azur)}
+  nav button[data-onglet=semaine].on  {color:var(--abricot)}
+  nav button[data-onglet=bilan].on    {color:var(--prune)}
+
+  .fond{position:fixed; inset:0; background:rgba(10,14,20,.45); opacity:0; pointer-events:none;
+    transition:opacity .2s; z-index:10}
+  .fond.on{opacity:1; pointer-events:auto}
+  .feuille{position:fixed; left:0; right:0; bottom:0; background:var(--fond); z-index:11;
+    border-radius:22px 22px 0 0; border-top:1px solid var(--trait);
+    padding:18px 18px calc(24px + env(safe-area-inset-bottom));
+    transform:translateY(105%); transition:transform .25s ease; max-height:88vh; overflow-y:auto}
+  .feuille.on{transform:translateY(0)}
+  .feuille h3{margin:2px 0 14px; font-size:17px}
+  .emojis{display:flex; gap:6px; overflow-x:auto; padding:4px 0}
+  .emojis button{font-size:25px; background:none; border:0; padding:6px; border-radius:50%; cursor:pointer}
+  .emojis button.on{background:var(--inerte)}
+
+  .alerte{background:var(--abricot); color:#231607; border-radius:14px; padding:12px 14px;
+    font-size:13px; line-height:1.45; margin-bottom:13px}
+  .alerte button{background:#231607; color:#fff; border:0; border-radius:9px;
+    padding:7px 12px; font-size:13px; margin-top:9px; cursor:pointer; font-family:inherit}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="jour">
+    <button onclick="bouger(-1)" aria-label="Jour précédent">‹</button>
+    <div class="centre">
+      <h1 id="titreJour"></h1>
+      <button class="retour" id="retourJour" onclick="aujourdhui()" hidden>Revenir à aujourd'hui</button>
+    </div>
+    <button onclick="bouger(1)" aria-label="Jour suivant">›</button>
+    <button class="reglages" onclick="feuilleReglages()" aria-label="Réglages">⚙</button>
+  </div>
+</header>
+
+<main id="ecran"></main>
+
+<nav>
+  <button data-onglet="journee" onclick="ouvrir('journee')">
+    <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg>Journée</button>
+  <button data-onglet="routine" onclick="ouvrir('routine')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>Routine</button>
+  <button data-onglet="habitudes" onclick="ouvrir('habitudes')">
+    <svg viewBox="0 0 24 24"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>Habitudes</button>
+  <button data-onglet="suivi" onclick="ouvrir('suivi')">
+    <svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 10-7.8 7.8l8.8 8.8 8.8-8.8a5.5 5.5 0 000-7.8z"/></svg>Suivi</button>
+  <button data-onglet="semaine" onclick="ouvrir('semaine')">
+    <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Semaine</button>
+  <button data-onglet="bilan" onclick="ouvrir('bilan')">
+    <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>Bilan</button>
+</nav>
+
+<div class="fond" id="fond" onclick="fermerFeuille()"></div>
+<div class="feuille" id="feuille"></div>
+<input type="file" id="fichierImport" accept=".json,application/json" hidden onchange="importer(this)">
+<input type="file" id="fichierStrava" accept=".csv,text/csv" hidden onchange="importerStrava(this)">
+
+<script>
+"use strict";
+
+/* ================= Sauvegarde ================= */
+const CLE = 'majournee';
+let secours = null;              // si Safari bloque le stockage
+let minuteurSauvegarde = null;
+
+function neuf(){
+  const rMatin = cleUnique();
+  return {version:3, taches:[], modeles:[], logs:{},
+  routines:[{id:rMatin, nom:"Matin", emoji:"🌅", jours:[], etapes:[
+    {id:cleUnique(), titre:"Boire un grand verre d'eau", heure:"07:30"},
+    {id:cleUnique(), titre:"Étirements", heure:"07:45"},
+    {id:cleUnique(), titre:"Écrire les 3 priorités du jour", heure:"08:00"}
+  ]}],
+  habitudes:[
+    {id:cleUnique(), nom:"Bouger 20 minutes", emoji:"🏃", jours:[]},
+    {id:cleUnique(), nom:"Lire", emoji:"📖", jours:[]},
+    {id:cleUnique(), nom:"Pas d'écran après 22h", emoji:"🌙", jours:[]}
+  ], vu:{}};
+}
+function cleUnique(){ return Math.random().toString(36).slice(2,10); }
+
+function charger(){
+  let brut = null;
+  try{ brut = localStorage.getItem(CLE) || localStorage.getItem('majournee-v1'); }catch(e){}
+  if(!brut) return neuf();
+  let d;
+  try{ d = JSON.parse(brut); }catch(e){ return neuf(); }
+  d.version  = 3;
+  d.routines  = d.routines  || [];
+  d.enCours   = d.enCours   || null;
+  d.taches    = d.taches    || [];
+  d.modeles   = d.modeles   || [];
+  d.habitudes = d.habitudes || [];
+  d.logs      = d.logs      || {};
+  d.vu        = d.vu        || {};
+  return d;
+}
+/** Écrit au plus une fois toutes les 400 ms. */
+function sauver(){
+  secours = data;
+  clearTimeout(minuteurSauvegarde);
+  minuteurSauvegarde = setTimeout(ecrire, 400);
+}
+function ecrire(){
+  const texte = JSON.stringify(data);
+  try{ localStorage.setItem(CLE, texte); }
+  catch(e){ console.warn('Stockage indisponible', e); }
+  copieDeSecours(texte);
+}
+/** Une seconde copie, écrite une fois par semaine, à part des données courantes. */
+function copieDeSecours(texte){
+  try{
+    const marque = localStorage.getItem(CLE+'-secours-date');
+    const aujourd = cle(new Date());
+    if(marque && (new Date(aujourd) - new Date(marque)) / 86400000 < 7) return;
+    localStorage.setItem(CLE+'-secours', texte);
+    localStorage.setItem(CLE+'-secours-date', aujourd);
+  }catch(e){}
+}
+function dateSecours(){
+  try{ return localStorage.getItem(CLE+'-secours-date'); }catch(e){ return null; }
+}
+function restaurerSecours(){
+  let brut = null;
+  try{ brut = localStorage.getItem(CLE+'-secours'); }catch(e){}
+  if(!brut){ alert("Aucune copie de secours disponible."); return; }
+  if(!confirm("Revenir à la copie du "+dateSecours()+" ? Les données actuelles seront remplacées.")) return;
+  try{ data = JSON.parse(brut); }catch(e){ alert("Copie illisible."); return; }
+  sauver(); ecrire(); fermerFeuille(); rendre();
+  alert("Copie de secours restaurée.");
+}
+window.addEventListener('pagehide', ecrire);
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden) ecrire(); });
+if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
+
+/* ================= Dates ================= */
+function cle(d){
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function libelle(d){
+  const t = d.toLocaleDateString('fr-FR',{weekday:'long', day:'numeric', month:'long'});
+  return t.charAt(0).toUpperCase()+t.slice(1);
+}
+function decale(d,n){ const c=new Date(d); c.setDate(c.getDate()+n); return c; }
+function estAujourdhui(d){ return cle(d)===cle(new Date()); }
+/** La semaine calendaire contenant d : toujours du lundi au dimanche. */
+function sept(d){
+  const lundi = new Date(d);
+  const js = lundi.getDay();                    // 0 = dimanche
+  lundi.setDate(lundi.getDate() - (js===0 ? 6 : js-1));
+  return [...Array(7)].map((_,i)=>decale(lundi,i));
+}
+function libelleSemaine(d){
+  const s = sept(d), a = s[0], b = s[6];
+  const opt = {day:'numeric', month:'long'};
+  return 'Du '+a.toLocaleDateString('fr-FR',opt)+' au '+b.toLocaleDateString('fr-FR',opt);
+}
+function initiale(d){ return d.toLocaleDateString('fr-FR',{weekday:'narrow'}).toUpperCase(); }
+
+/* ================= État ================= */
+let data = charger();
+let jour = new Date();
+let onglet = 'journee';
+const K = ()=>cle(jour);
+
+function log(k){
+  if(!data.logs[k]) data.logs[k] = {humeur:null, sommeil:7, eau:0, sport:0, note:'', bonne:'', note5:null};
+  return data.logs[k];
+}
+/** Rang de tri : l'heure d'abord, puis l'ordre choisi à la main. */
+function rang(t){
+  if(t.ordre !== undefined) return t.ordre;
+  return (t.heure ? +t.heure.slice(0,2)*60 + +t.heure.slice(3) : 9999) * 100;
+}
+function taches(k){
+  return data.taches.filter(t=>t.jour===k).sort((a,b)=>rang(a)-rang(b));
+}
+function normaliserOrdre(k){
+  taches(k).forEach((t,i)=>{ t.ordre = i*100; });
+}
+function deplacerTache(i, sens){
+  const t = data.taches.find(x=>x.id===i), k = t.jour;
+  normaliserOrdre(k);
+  const liste = taches(k), pos = liste.findIndex(x=>x.id===i), cible = pos + sens;
+  if(cible < 0 || cible >= liste.length) return;
+  const provisoire = liste[pos].ordre;
+  liste[pos].ordre = liste[cible].ordre;
+  liste[cible].ordre = provisoire;
+  sauver(); rendre();
+}
+function reporterDemain(i){
+  const t = data.taches.find(x=>x.id===i);
+  t.jour = cle(decale(new Date(t.jour+'T12:00:00'), 1));
+  t.fait = false; t.ordre = undefined;
+  sauver(); fermerFeuille(); rendre();
+}
+function dupliquerTache(i){
+  const t = data.taches.find(x=>x.id===i);
+  data.taches.push({id:cleUnique(), titre:t.titre, jour:t.jour, heure:t.heure,
+                    duree:t.duree, type:t.type, fait:false});
+  sauver(); fermerFeuille(); rendre();
+}
+function serie(h){
+  let n=0, c=new Date(jour);
+  while(h.jours.includes(cle(c))){ n++; c=decale(c,-1); }
+  return n;
+}
+
+/* ---- Tâches récurrentes : on crée l'exemplaire du jour à l'ouverture ---- */
+function appliquerModeles(k){
+  const d = new Date(k+'T12:00:00'), js = d.getDay();
+  let ajout = false;
+  data.modeles.forEach(m=>{
+    if(m.debut && k < m.debut) return;
+    const concerne = m.repetition==='quotidien'
+      || (m.repetition==='ouvres' && js>=1 && js<=5)
+      || (m.repetition==='hebdo' && js===m.jourSemaine);
+    if(!concerne) return;
+    if(data.taches.some(t=>t.modele===m.id && t.jour===k)) return;
+    data.taches.push({id:cleUnique(), titre:m.titre, jour:k, heure:m.heure, fait:false, modele:m.id});
+    ajout = true;
+  });
+  if(ajout) sauver();
+}
+
+/* ---- Routines toutes prêtes ---- */
+let BIBLIO = [], JOURNEES = [], HABITUDES = [];
+let catalogueCharge = false, chargementCatalogue = null;
+
+/** Le catalogue arrive seulement quand on en a besoin. */
+function chargerCatalogue(){
+  if(catalogueCharge) return Promise.resolve(true);
+  if(chargementCatalogue) return chargementCatalogue;
+  chargementCatalogue = new Promise(resoudre=>{
+    const balise = document.createElement('script');
+    balise.src = 'catalogue.js';
+    balise.onload = () => {
+      BIBLIO    = window.CATALOGUE.BIBLIO;
+      JOURNEES  = window.CATALOGUE.JOURNEES;
+      HABITUDES = window.CATALOGUE.HABITUDES;
+      JOURNEES.forEach(j=>BIBLIO.push({cat:"Journée type", nom:j.nom, emoji:j.emoji,
+                                       depart:j.depart, etapes:j.etapes}));
+      catalogueCharge = true;
+      resoudre(true);
+    };
+    balise.onerror = () => { alert("Catalogue introuvable. Vérifie que catalogue.js est en ligne à côté de index.html."); resoudre(false); };
+    document.head.appendChild(balise);
+  });
+  return chargementCatalogue;
+}
+
+/* ---- Journées types : un modèle qui remplit toute la journée ---- */
+
+
+/** Recalcule les heures à partir de l'heure de départ et des durées. */
+function recalculerHeures(r){
+  if(!r.depart) return;
+  let [h,m] = r.depart.split(':').map(Number);
+  r.etapes.forEach(e=>{
+    e.heure = String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+    m += (e.duree || 10);
+    h = (h + Math.floor(m/60)) % 24;
+    m = m % 60;
+  });
+}
+function finRoutine(r){
+  const total = r.etapes.reduce((a,e)=>a+(e.duree||10),0);
+  if(!r.depart) return total+' min au total';
+  let [h,m] = r.depart.split(':').map(Number);
+  m += total; h = (h + Math.floor(m/60)) % 24; m = m % 60;
+  return 'de '+r.depart.replace(':','h')+' à '+String(h).padStart(2,'0')+'h'+String(m).padStart(2,'0');
+}
+function deplacerEtape(idR, idE, sens){
+  const r = data.routines.find(x=>x.id===idR);
+  const i = r.etapes.findIndex(e=>e.id===idE), j = i + sens;
+  if(j<0 || j>=r.etapes.length) return;
+  [r.etapes[i], r.etapes[j]] = [r.etapes[j], r.etapes[i]];
+  recalculerHeures(r); sauver(); rendre();
+}
+
+/* ---- Routines : les étapes des routines actives arrivent dans la journée ---- */
+function appliquerRoutines(k){
+  const js = new Date(k+'T12:00:00').getDay();
+  let ajout = false;
+  data.routines.forEach(r=>{
+    if(r.actif===false) return;
+    if(!r.jours.includes(js)) return;
+    r.etapes.forEach(e=>{
+      if(data.taches.some(t=>t.etape===e.id && t.jour===k)) return;
+      data.taches.push({id:cleUnique(), titre:e.titre, jour:k, heure:e.heure, duree:e.duree,
+                        fait:false, type:e.type, routine:r.id, etape:e.id});
+      ajout = true;
+    });
+  });
+  if(ajout) sauver();
+}
+/** Ajoute maintenant toutes les étapes d'une routine au jour affiché. */
+function appliquerMaintenant(idRoutine){
+  const r = data.routines.find(x=>x.id===idRoutine), k = K();
+  let n = 0;
+  r.etapes.forEach(e=>{
+    if(data.taches.some(t=>t.etape===e.id && t.jour===k)) return;
+    data.taches.push({id:cleUnique(), titre:e.titre, jour:k, heure:e.heure, duree:e.duree,
+                      fait:false, type:e.type, routine:r.id, etape:e.id});
+    n++;
+  });
+  sauver(); onglet='journee'; window.scrollTo(0,0); rendre();
+}
+
+/* ================= Navigation ================= */
+function bouger(n){ jour = decale(jour,n); rendre(); }
+function aujourdhui(){ jour = new Date(); rendre(); }
+function ouvrir(o){ onglet = o; window.scrollTo(0,0); rendre(); }
+
+/* ================= Report automatique dans le suivi ================= */
+const MOTS = {
+  sport: /(sport|course|courir|marche|marcher|randonn|v[ée]lo|nage|natation|entra[îi]nement|match|tournoi|renforcement|gainage|circuit|mobilit[ée]|[ée]tirement|yoga|escalade|foot|futsal|basket|handball|volley|rugby|padel|tennis|danse|s[ée]ance|[ée]chauffement|poules|phase finale)/i,
+  eau:   /(verre d'eau|boire|hydrat)/i
+};
+function typeEtape(titre){
+  if(MOTS.sport.test(titre)) return 'sport';
+  if(MOTS.eau.test(titre))   return 'eau';
+  return null;
+}
+/** Cocher une étape de routine remplit le suivi tout seul. */
+function reporterSuivi(t, sens){
+  const type = t.type || ((t.routine || t.duree) ? typeEtape(t.titre) : null);
+  if(!type || type === 'aucun') return;
+  const l = log(t.jour);
+  if(type === 'sport'){
+    const minutes = t.duree || 0;
+    l.sport     = Math.max(0, (l.sport||0)     + sens*minutes);
+    l.autoSport = Math.max(0, (l.autoSport||0) + sens*minutes);
+  }
+  if(type === 'eau'){
+    l.eau     = Math.max(0, (l.eau||0)     + sens);
+    l.autoEau = Math.max(0, (l.autoEau||0) + sens);
+  }
+}
+
+/* ================= Actions ================= */
+function basculerTache(i){
+  const t = data.taches.find(x=>x.id===i);
+  t.fait = !t.fait;
+  reporterSuivi(t, t.fait ? 1 : -1);
+  sauver();
+  if(onglet === 'journee') rafraichirLigne(t); else rendre();
+}
+/** On ne redessine que la ligne concernée et la barre d'avancement. */
+function rafraichirLigne(t){
+  const ligne = document.querySelector('[data-tache="'+t.id+'"]');
+  if(!ligne){ rendre(); return; }
+  ligne.classList.toggle('done', t.fait);
+  const coche = ligne.querySelector('.coche');
+  coche.classList.toggle('on', t.fait);
+  coche.textContent = t.fait ? '✓' : '';
+  const liste = taches(t.jour), faites = liste.filter(x=>x.fait).length;
+  const titre = document.getElementById('resumeJour');
+  const jauge = document.getElementById('jaugeJour');
+  if(titre) titre.textContent = faites+' sur '+liste.length+' terminées';
+  if(jauge) jauge.style.width = Math.round(faites/liste.length*100)+'%';
+}
+function supprimerTache(i){
+  const t = data.taches.find(x=>x.id===i);
+  if(t && t.modele && !confirm("Supprimer cet exemplaire ? La tâche reviendra les jours suivants.")) return;
+  data.taches = data.taches.filter(x=>x.id!==i); sauver(); rendre();
+}
+function reprendreHier(){
+  const hier = cle(decale(jour,-1));
+  data.taches.filter(t=>t.jour===hier && !t.fait)
+    .forEach(t=>data.taches.push({id:cleUnique(), titre:t.titre, jour:K(), heure:t.heure, fait:false}));
+  sauver(); rendre();
+}
+function basculerHabitude(i){
+  const h = data.habitudes.find(x=>x.id===i), k = K();
+  h.jours = h.jours.includes(k) ? h.jours.filter(j=>j!==k) : h.jours.concat(k);
+  sauver(); rendre();
+}
+function supprimerHabitude(i){
+  if(!confirm("Supprimer cette habitude et tout son historique ?")) return;
+  data.habitudes = data.habitudes.filter(x=>x.id!==i); sauver(); rendre();
+}
+function basculerActif(idRoutine){
+  const r = data.routines.find(x=>x.id===idRoutine);
+  r.actif = r.actif===false ? true : false;
+  sauver(); rendre();
+}
+function joursRapides(idRoutine, type){
+  const r = data.routines.find(x=>x.id===idRoutine);
+  r.jours = type==='tous' ? [0,1,2,3,4,5,6]
+          : type==='ouvres' ? [1,2,3,4,5]
+          : type==='weekend' ? [0,6] : [];
+  sauver(); rendre();
+}
+function appliquerSemaine(idRoutine){
+  const r = data.routines.find(x=>x.id===idRoutine);
+  let n = 0;
+  sept(jour).forEach(d=>{
+    const k = cle(d);
+    r.etapes.forEach(e=>{
+      if(data.taches.some(t=>t.etape===e.id && t.jour===k)) return;
+      data.taches.push({id:cleUnique(), titre:e.titre, jour:k, heure:e.heure, duree:e.duree,
+                        fait:false, type:e.type, routine:r.id, etape:e.id});
+      n++;
+    });
+  });
+  sauver(); rendre();
+  alert(n+" tâches ajoutées sur la semaine.");
+}
+function dupliquerRoutine(idRoutine){
+  const r = data.routines.find(x=>x.id===idRoutine);
+  data.routines.push({id:cleUnique(), nom:r.nom+' (copie)', emoji:r.emoji, jours:[], actif:true,
+    depart:r.depart, etapes:r.etapes.map(e=>({id:cleUnique(), titre:e.titre, heure:e.heure, duree:e.duree}))});
+  sauver(); rendre();
+}
+/** Toute la routine part dans le calendrier de l'iPhone, un événement par étape. */
+function routineCalendrier(idRoutine){
+  const r = data.routines.find(x=>x.id===idRoutine), k = K();
+  const lignes = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Ma journee//FR'];
+  r.etapes.forEach(e=>{
+    if(!e.heure) return;
+    const [h,m] = e.heure.split(':').map(Number);
+    const duree = e.duree || 10;
+    let fh = h, fm = m + duree; fh = (fh + Math.floor(fm/60)) % 24; fm = fm % 60;
+    const j = k.replace(/-/g,'');
+    lignes.push('BEGIN:VEVENT','UID:'+e.id+'@majournee',
+      'DTSTAMP:'+j+'T'+String(h).padStart(2,'0')+String(m).padStart(2,'0')+'00',
+      'DTSTART:'+j+'T'+String(h).padStart(2,'0')+String(m).padStart(2,'0')+'00',
+      'DTEND:'+j+'T'+String(fh).padStart(2,'0')+String(fm).padStart(2,'0')+'00',
+      'SUMMARY:'+(r.emoji+' '+e.titre).replace(/[,;\\]/g,' '),
+      'BEGIN:VALARM','TRIGGER:-PT5M','ACTION:DISPLAY','DESCRIPTION:'+e.titre.replace(/[,;\\]/g,' '),
+      'END:VALARM','END:VEVENT');
+  });
+  lignes.push('END:VCALENDAR');
+  if(lignes.length<=4){ alert("Donne d'abord une heure de départ à la routine."); return; }
+  telecharger(new Blob([lignes.join('\r\n')],{type:'text/calendar'}), 'routine.ics');
+}
+
+function basculerJourRoutine(idRoutine, js){
+  const r = data.routines.find(x=>x.id===idRoutine);
+  r.jours = r.jours.includes(js) ? r.jours.filter(j=>j!==js) : r.jours.concat(js);
+  sauver(); rendre();
+}
+function supprimerRoutine(i){
+  if(!confirm("Supprimer cette routine ? Les tâches déjà créées restent en place.")) return;
+  data.routines = data.routines.filter(r=>r.id!==i); sauver(); rendre();
+}
+function supprimerEtape(idRoutine, idEtape){
+  const r = data.routines.find(x=>x.id===idRoutine);
+  r.etapes = r.etapes.filter(e=>e.id!==idEtape); sauver(); rendre();
+}
+function maj(champ,valeur){ log(K())[champ]=valeur; sauver(); rendre(); }
+function majTexte(champ,valeur){ log(K())[champ]=valeur; sauver(); }   // pas de redessin pendant la frappe
+
+/* ---- Rappel : on passe par le calendrier de l'iPhone ---- */
+function rappelCalendrier(i){
+  const t = data.taches.find(x=>x.id===i);
+  if(!t || !t.heure) return;
+  const [h,m] = t.heure.split(':');
+  const debut = t.jour.replace(/-/g,'')+'T'+h+m+'00';
+  const fin   = t.jour.replace(/-/g,'')+'T'+String((+h+((+m+30)>=60?1:0))%24).padStart(2,'0')+String((+m+30)%60).padStart(2,'0')+'00';
+  const ics = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Ma journee//FR','BEGIN:VEVENT',
+    'UID:'+t.id+'@majournee','DTSTAMP:'+debut,'DTSTART:'+debut,'DTEND:'+fin,
+    'SUMMARY:'+t.titre.replace(/[,;\\]/g,' '),
+    'BEGIN:VALARM','TRIGGER:-PT5M','ACTION:DISPLAY','DESCRIPTION:'+t.titre.replace(/[,;\\]/g,' '),
+    'END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n');
+  telecharger(new Blob([ics],{type:'text/calendar'}), 'rappel.ics');
+}
+
+/* ================= Export / import ================= */
+function telecharger(blob, nom){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = nom;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
+}
+function exporter(){
+  const contenu = JSON.stringify(data);
+  const nom = 'majournee-'+cle(new Date())+'.json';
+  const fichier = new File([contenu], nom, {type:'application/json'});
+  data.vu.export = cle(new Date());
+  sauver(); ecrire();
+  if(navigator.canShare && navigator.canShare({files:[fichier]})){
+    navigator.share({files:[fichier], title:'Sauvegarde Ma journée'}).catch(()=>{});
+  }else{
+    telecharger(new Blob([contenu],{type:'application/json'}), nom);
+  }
+  rendre();
+}
+function importer(input){
+  const f = input.files[0];
+  if(!f) return;
+  const lecteur = new FileReader();
+  lecteur.onload = () => {
+    let entrant;
+    try{ entrant = JSON.parse(lecteur.result); }
+    catch(e){ alert("Fichier illisible. Choisis un fichier majournee-….json."); return; }
+    if(!entrant || !Array.isArray(entrant.taches)){ alert("Ce fichier n'est pas une sauvegarde de Ma journée."); return; }
+    if(!confirm("Remplacer les données actuelles par cette sauvegarde ?")) return;
+    data = entrant;
+    data.version=2; data.modeles=data.modeles||[]; data.vu=data.vu||{};
+    sauver(); ecrire(); fermerFeuille(); rendre();
+    alert("Sauvegarde restaurée.");
+  };
+  lecteur.readAsText(f);
+  input.value = '';
+}
+function toutEffacer(){
+  if(!confirm("Effacer définitivement toutes les données ?")) return;
+  if(!confirm("Vraiment ? Cette action est irréversible.")) return;
+  data = neuf(); sauver(); ecrire(); fermerFeuille(); rendre();
+}
+/** Nombre de jours depuis la dernière sauvegarde exportée. */
+function joursDepuisExport(){
+  if(!data.vu.export) return null;
+  const diff = (new Date(cle(new Date())) - new Date(data.vu.export)) / 86400000;
+  return Math.round(diff);
+}
+
+/* ================= Couleurs ================= */
+const TEINTES = ['--indigo','--sauge','--abricot','--azur','--prune','--brique','--or'];
+function teinte(i){ return 'var('+TEINTES[i % TEINTES.length]+')'; }
+
+/* ================= Habitudes proposées ================= */
+
+
+/* ================= Connexions extérieures ================= */
+/** L'app Santé passe par un Raccourci iPhone qui ouvre l'app avec les valeurs du jour. */
+function lireParametres(){
+  const p = new URLSearchParams(location.search);
+  if(![...p.keys()].length) return;
+  const k = p.get('date') || cle(new Date());
+  const l = log(k);
+  let recu = [];
+  if(p.get('pas')){     l.pas     = Math.round(+p.get('pas'));           recu.push('pas'); }
+  if(p.get('sommeil')){ l.sommeil = Math.min(14, +p.get('sommeil'));     recu.push('sommeil'); }
+  if(p.get('sport')){   l.sport   = Math.round(+p.get('sport'));         recu.push('activité'); }
+  if(p.get('eau')){     l.eau     = Math.round(+p.get('eau'));           recu.push('eau'); }
+  if(recu.length){
+    data.vu.sante = cle(new Date());
+    sauver(); ecrire();
+    setTimeout(()=>alert("Données reçues de l'app Santé : "+recu.join(', ')+"."), 400);
+  }
+  history.replaceState({}, '', location.pathname);   // on nettoie l'adresse
+}
+
+/** Adresse à recopier dans le Raccourci iPhone. */
+function adresseRaccourci(){
+  return location.origin + location.pathname + '?date=AAAA-MM-JJ&pas=0&sommeil=0&sport=0';
+}
+
+/* ---- Strava : import du fichier d'activités ---- */
+function decouperCSV(ligne){
+  const cases = []; let courant = '', dansGuillemets = false;
+  for(const c of ligne){
+    if(c === '"') dansGuillemets = !dansGuillemets;
+    else if(c === ',' && !dansGuillemets){ cases.push(courant); courant = ''; }
+    else courant += c;
+  }
+  cases.push(courant);
+  return cases;
+}
+function importerStrava(input){
+  const f = input.files[0];
+  if(!f) return;
+  const lecteur = new FileReader();
+  lecteur.onload = () => {
+    const lignes = String(lecteur.result).split(/\r?\n/).filter(l=>l.trim());
+    if(lignes.length < 2){ alert("Fichier vide."); input.value=''; return; }
+    const entetes = decouperCSV(lignes[0]).map(h=>h.trim().toLowerCase());
+    const iDate = entetes.findIndex(h=>h.includes('date'));
+    const iDuree = entetes.findIndex(h=>h.includes('moving time') || h.includes('temps de déplacement')
+                              || h.includes('elapsed time') || h.includes('durée'));
+    if(iDate < 0 || iDuree < 0){
+      alert("Colonnes introuvables. Utilise le fichier activities.csv de l'export Strava.");
+      input.value=''; return;
+    }
+    const parJour = {};
+    lignes.slice(1).forEach(ligne=>{
+      const c = decouperCSV(ligne);
+      const d = new Date(c[iDate]);
+      if(isNaN(d)) return;
+      let v = parseFloat(String(c[iDuree]).replace(',','.'));
+      if(isNaN(v)) return;
+      const minutes = v > 600 ? Math.round(v/60) : Math.round(v);   // secondes ou minutes
+      const k = cle(d);
+      parJour[k] = (parJour[k] || 0) + minutes;
+    });
+    const jours = Object.keys(parJour);
+    if(!jours.length){ alert("Aucune activité lisible dans ce fichier."); input.value=''; return; }
+    if(!confirm(jours.length+" jours d'activité trouvés. Les ajouter au suivi ?")){ input.value=''; return; }
+    jours.forEach(k=>{
+      const l = log(k);
+      l.sport = Math.max(l.sport||0, parJour[k]);   // on ne double pas ce qui est déjà noté
+    });
+    sauver(); ecrire(); fermerFeuille(); rendre();
+    alert("Activités importées sur "+jours.length+" jours.");
+  };
+  lecteur.readAsText(f);
+  input.value = '';
+}
+
+/* ================= Écrans ================= */
+function ecranJournee(){
+  const k = K();
+  appliquerModeles(k);
+  appliquerRoutines(k);
+  const t = taches(k), faites = t.filter(x=>x.fait).length;
+  const pct = t.length ? Math.round(faites/t.length*100) : 0;
+  return alerteSauvegarde() + `
+  ${banniereRoutine()}
+  <div class="carte">
+    <h2>Avancement</h2>
+    <div class="gros" id="resumeJour">${t.length ? faites+' sur '+t.length+' terminées' : 'Journée libre'}</div>
+    <div class="barre-p"><span id="jaugeJour" style="width:${pct}%"></span></div>
+  </div>
+  <div class="carte">
+    <div class="entre" style="margin-bottom:10px">
+      <h2 style="margin:0">Programme</h2>
+      <button class="mini" onclick="feuilleTache()">+ Ajouter</button>
+    </div>
+    ${t.length ? t.map((x,i)=>`
+      <div class="tache ${x.fait?'done':''}" data-tache="${x.id}">
+        <div class="rangee" style="gap:0; flex-direction:column">
+          <button class="fleche" onclick="deplacerTache('${x.id}',-1)" ${i===0?'disabled':''}>▲</button>
+          <button class="fleche" onclick="deplacerTache('${x.id}',1)" ${i===t.length-1?'disabled':''}>▼</button>
+        </div>
+        <button class="coche ${x.fait?'on':''}" onclick="basculerTache('${x.id}')" aria-label="Terminer">${x.fait?'✓':''}</button>
+        <button class="txt" onclick="feuilleTache('${x.id}')">${prot(x.titre)}
+          ${x.heure||x.modele||x.routine ? `<span class="meta">${x.heure?x.heure.replace(':','h'):''}
+            ${x.modele?'<span class="etiq">↻ récurrente</span>':''}
+            ${x.routine?'<span class="etiq">'+(etiquetteRoutine(x.routine))+'</span>':''}</span>` : ''}
+        </button>
+        <button class="suppr" onclick="supprimerTache('${x.id}')" aria-label="Supprimer">×</button>
+      </div>`).join('') : `
+      <p class="vide">Rien de prévu. Ajoute une tâche, ou reprends celles d'hier.</p>
+      <button class="mini" onclick="reprendreHier()">Reprendre les tâches d'hier</button>`}
+  </div>`;
+}
+
+function ecranHabitudes(){
+  const k = K(), semaine = sept(jour);
+  if(!data.habitudes.length){
+    return `<div class="carte"><h2>Habitudes</h2>
+      <p class="vide">Aucune habitude suivie pour l'instant. Pioche dans les propositions
+      ou crée la tienne.</p>
+      <div class="rangee">
+        <button class="act" onclick="feuilleSuggestions()">📚 Propositions</button>
+        <button class="mini" onclick="feuilleHabitude()">+ Créer</button>
+      </div></div>`;
+  }
+  return data.habitudes.map((h,i)=>{
+    const s = serie(h), fait = h.jours.includes(k);
+    return `<div class="carte" style="--accent:${teinte(i)}">
+      <div class="entre" style="margin-bottom:12px">
+        <h2 style="margin:0">${h.emoji} ${prot(h.nom)}</h2>
+        <button class="suppr" onclick="supprimerHabitude('${h.id}')" aria-label="Supprimer">×</button>
+      </div>
+      <div class="semaine">${semaine.map(d=>`<div><small>${initiale(d)}</small>
+        <div class="pastille ${h.jours.includes(cle(d))?'on':''} ${cle(d)===k?'actuel':''}"></div></div>`).join('')}</div>
+      <div class="entre">
+        <span class="serie">${s>1 ? "🔥 "+s+" jours d'affilée" : ""}</span>
+        <button class="act ${fait?'on':''}" onclick="basculerHabitude('${h.id}')">${fait?'✓ Fait':'Marquer comme fait'}</button>
+      </div></div>`;
+  }).join('') + `<div class="rangee">
+    <button class="act" style="flex:1" onclick="feuilleSuggestions()">📚 Propositions</button>
+    <button class="mini" onclick="feuilleHabitude()">+ Créer la mienne</button>
+  </div>`;
+}
+
+function ecranSuivi(){
+  const l = log(K());
+  const humeurs = [[1,'😔'],[2,'😕'],[3,'😐'],[4,'🙂'],[5,'😄']];
+  return `
+  <div class="carte" style="--accent:var(--prune)"><h2>Comment tu te sens</h2>
+    <div class="humeurs ${l.humeur===null?'vierge':''}">
+      ${humeurs.map(([v,e])=>`<button class="${l.humeur===v?'on':''}" onclick="maj('humeur',${l.humeur===v?'null':v})">${e}</button>`).join('')}
+    </div></div>
+  <div class="carte" style="--accent:var(--indigo)"><h2>Sommeil de la nuit</h2>
+    <div class="gros" id="valSommeil">${fmt(l.sommeil)} h</div>
+    <input type="range" min="0" max="12" step="0.5" value="${l.sommeil}"
+      oninput="majTexte('sommeil',parseFloat(this.value)); document.getElementById('valSommeil').textContent=fmt(this.value)+' h'">
+  </div>
+  ${l.pas ? `<div class="carte" style="--accent:var(--sauge)"><h2>Pas de la journée</h2>
+    <div class="gros">${l.pas.toLocaleString('fr-FR')} pas</div>
+    <p class="vide" style="margin:8px 0 0">Importés depuis l'app Santé.</p></div>` : ''}
+  <div class="carte" style="--accent:var(--azur)"><h2>Verres d'eau</h2>
+    <div class="compteur">
+      <button onclick="maj('eau',Math.max(0,${l.eau}-1))">−</button>
+      <div class="gros">${l.eau}</div>
+      <button onclick="maj('eau',${l.eau}+1)">+</button>
+      <div style="flex:1; text-align:right">${'💧'.repeat(Math.min(l.eau,8))}</div>
+    </div>
+    ${l.autoEau ? `<p class="vide" style="margin:10px 0 0">Dont ${l.autoEau} venus des routines.</p>` : ''}
+    </div>
+  <div class="carte" style="--accent:var(--sauge)"><h2>Activité physique</h2>
+    <div class="gros">${l.sport} minutes</div>
+    <p class="vide" style="margin:6px 0 12px">${l.autoSport
+      ? "Dont "+l.autoSport+" min cochées dans tes routines."
+      : "Coche une étape de sport dans une routine et les minutes arrivent ici."}</p>
+    <div class="rangee">
+      ${[10,20,30,45].map(m=>`<button class="mini" onclick="maj('sport',${l.sport}+${m})">+${m}</button>`).join('')}
+      <button class="mini" onclick="maj('sport',0)">Effacer</button>
+    </div></div>`;
+}
+
+let vueStats = 'semaine';
+function changerVue(v){ vueStats = v; rendre(); }
+
+function ecranMois(){
+  const debut = new Date(jour.getFullYear(), jour.getMonth(), 1);
+  const nbJours = new Date(jour.getFullYear(), jour.getMonth()+1, 0).getDate();
+  const decalage = (debut.getDay() + 6) % 7;                  // lundi en première colonne
+  const cases = [...Array(decalage).fill(null),
+                 ...[...Array(nbJours)].map((_,i)=>new Date(jour.getFullYear(), jour.getMonth(), i+1))];
+  const visages = {1:'😔',2:'😕',3:'😐',4:'🙂',5:'😄'};
+  const logsMois = cases.filter(Boolean).map(d=>data.logs[cle(d)]).filter(Boolean);
+  const moyenne = f => {
+    const v = logsMois.map(f).filter(x=>x!==null && x!==undefined);
+    return v.length ? v.reduce((a,b)=>a+b,0)/v.length : 0;
+  };
+  const nomMois = jour.toLocaleDateString('fr-FR',{month:'long', year:'numeric'});
+  return basculeVue() + `
+  <div class="carte" style="--accent:var(--abricot)"><h2>${nomMois.charAt(0).toUpperCase()+nomMois.slice(1)}</h2>
+    <div class="jours" style="margin-bottom:6px">${['L','M','M','J','V','S','D'].map(l=>`<div>${l}</div>`).join('')}</div>
+    <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:5px">
+      ${cases.map(d=>{
+        if(!d) return '<div></div>';
+        const k = cle(d), liste = data.taches.filter(t=>t.jour===k);
+        const pct = liste.length ? liste.filter(t=>t.fait).length/liste.length : null;
+        const fond = pct===null ? 'var(--inerte)' : `color-mix(in srgb, var(--sauge) ${Math.round(pct*100)}%, var(--inerte))`;
+        return `<button onclick="allerA('${k}')" style="aspect-ratio:1; border:0; padding:0; border-radius:9px;
+          background:${fond}; color:${pct>0.5?'#fff':'var(--gris)'}; font-size:11px; font-family:inherit;
+          ${k===K()?'outline:2px solid var(--abricot); outline-offset:1px':''}">${d.getDate()}</button>`;
+      }).join('')}
+    </div>
+    <p class="vide" style="margin:12px 0 0">Plus la case est verte, plus la journée a été menée à bout.
+    Appuie sur un jour pour l'ouvrir.</p>
+  </div>
+  <div class="carte" style="--accent:var(--prune)"><h2>Humeur du mois</h2>
+    <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:5px; font-size:17px; text-align:center">
+      ${cases.map(d=>{
+        if(!d) return '<div></div>';
+        const l = data.logs[cle(d)];
+        return `<div>${l && l.humeur ? visages[l.humeur] : '·'}</div>`;
+      }).join('')}
+    </div>
+  </div>
+  <div class="carte"><h2>Moyennes du mois</h2>
+    <div class="ligne"><span>Jours remplis</span><span>${logsMois.length} sur ${nbJours}</span></div>
+    <div class="ligne"><span>Sommeil</span><span>${fmt(moyenne(l=>l.sommeil))} h par nuit</span></div>
+    <div class="ligne"><span>Eau</span><span>${Math.round(moyenne(l=>l.eau)*10)/10} verres par jour</span></div>
+    <div class="ligne"><span>Activité</span><span>${logsMois.reduce((a,l)=>a+(l.sport||0),0)} min au total</span></div>
+    <div class="ligne"><span>Humeur</span><span>${logsMois.filter(l=>l.humeur).length ? fmt(moyenne(l=>l.humeur))+' sur 5' : '—'}</span></div>
+  </div>`;
+}
+function allerA(k){
+  jour = new Date(k+'T12:00:00'); onglet = 'journee'; window.scrollTo(0,0); rendre();
+}
+function basculeVue(){
+  return `<div class="rangee" style="margin-bottom:13px">
+    ${[['semaine','Semaine'],['mois','Mois']].map(([v,l])=>
+      `<button class="mini ${vueStats===v?'on':''}" style="flex:1" onclick="changerVue('${v}')">${l}</button>`).join('')}
+  </div>`;
+}
+
+function ecranSemaine(){
+  if(vueStats === 'mois') return ecranMois();
+  const semaine = sept(jour);
+  const stats = semaine.map(d=>{
+    const k = cle(d), t = data.taches.filter(x=>x.jour===k);
+    return {k, d,
+      pct: t.length ? t.filter(x=>x.fait).length/t.length : 0,
+      total: t.length,
+      l: data.logs[k] || null,
+      hab: data.habitudes.filter(h=>h.jours.includes(k)).length};
+  });
+  const moy = (f,def) => {
+    const v = stats.map(f).filter(x=>x!==null && x!==undefined);
+    return v.length ? v.reduce((a,b)=>a+b,0)/v.length : def;
+  };
+  const visages = {1:'😔',2:'😕',3:'😐',4:'🙂',5:'😄'};
+  return basculeVue() + `
+  <div class="carte"><h2>${libelleSemaine(jour)}</h2>
+    <div style="margin:-4px 0 12px; font-size:13px; color:var(--gris)">Tâches terminées</div>
+    <div class="histo">${stats.map((s,i)=>`<div>
+      <div class="col ${s.total?'':'creux'}" style="height:${s.total? Math.max(4, s.pct*100) : 4}%;
+        ${s.total?'background:'+teinte(i)+';':''}"></div>
+    </div>`).join('')}</div>
+    <div class="jours">${stats.map(s=>`<div${cle(s.d)===K()?' style="color:var(--sauge); font-weight:700"':''}>${initiale(s.d)}</div>`).join('')}</div>
+  </div>
+  <div class="carte"><h2>Humeur</h2>
+    <div class="jours" style="font-size:22px; margin-bottom:6px">
+      ${stats.map(s=>`<div>${s.l && s.l.humeur ? visages[s.l.humeur] : '·'}</div>`).join('')}</div>
+    <div class="jours">${stats.map(s=>`<div>${initiale(s.d)}</div>`).join('')}</div>
+  </div>
+  ${data.routines.length ? `<div class="carte" style="--accent:var(--brique)"><h2>Routines de la semaine</h2>
+    ${data.routines.map(r=>{
+      const liees = stats.flatMap(x=>data.taches.filter(t=>t.jour===x.k && t.routine===r.id));
+      if(!liees.length) return '';
+      const faites = liees.filter(t=>t.fait).length;
+      const pct = Math.round(faites/liees.length*100);
+      return `<div style="margin-bottom:12px">
+        <div class="entre" style="font-size:14px">
+          <span>${r.emoji} ${prot(r.nom)}</span><span class="serie">${faites}/${liees.length} · ${pct}%</span>
+        </div>
+        <div class="barre-p"><span style="width:${pct}%"></span></div>
+      </div>`;
+    }).join('') || '<p class="vide">Aucune routine appliquée cette semaine.</p>'}
+    <div class="ligne" style="border-top:1px solid var(--trait); padding-top:10px">
+      <span>Minutes venues des routines</span>
+      <span>${stats.reduce((a,s)=>a+(s.l&&s.l.autoSport?s.l.autoSport:0),0)} min</span></div>
+  </div>` : ''}
+  <div class="carte"><h2>Moyennes de la semaine</h2>
+    <div class="ligne"><span>Sommeil</span><span>${fmt(moy(s=>s.l?s.l.sommeil:null,0))} h par nuit</span></div>
+    <div class="ligne"><span>Eau</span><span>${Math.round(moy(s=>s.l?s.l.eau:null,0)*10)/10} verres par jour</span></div>
+    <div class="ligne"><span>Activité</span><span>${stats.reduce((a,s)=>a+(s.l?s.l.sport:0),0)} min au total</span></div>
+    <div class="ligne"><span>Habitudes tenues</span><span>${stats.reduce((a,s)=>a+s.hab,0)} sur ${data.habitudes.length*7}</span></div>
+    ${stats.some(s=>s.l&&s.l.pas) ? `<div class="ligne"><span>Pas</span><span>${stats.reduce((a,s)=>a+(s.l&&s.l.pas?s.l.pas:0),0).toLocaleString('fr-FR')} au total</span></div>` : ''}
+  </div>`;
+}
+
+function ecranRoutine(){
+  const JOURS = [[1,'L'],[2,'M'],[3,'M'],[4,'J'],[5,'V'],[6,'S'],[0,'D']];
+  const entete = `<div class="carte" style="--accent:var(--brique)">
+    <h2>Tes routines</h2>
+    <p class="vide">Une suite d'étapes que tu réutilises. Choisis les jours où elle s'applique,
+    et elle remplit ta journée toute seule. Tu peux aussi la dérouler minuteur en main.</p>
+    <div class="rangee">
+      <button class="act" onclick="feuilleRoutine()">+ Créer</button>
+      <button class="mini" onclick="feuilleBibliotheque()">📚 ${catalogueCharge ? BIBLIO.length+' modèles' : 'Modèles de routines'}</button>
+    </div>
+  </div>
+  <div class="carte" style="--accent:var(--indigo)">
+    <h2>Journées types</h2>
+    <p class="vide">${catalogueCharge ? JOURNEES.length : 'Vingt-trois'} journées complètes, du réveil au coucher : bureau et sport,
+    télétravail, indépendant, projet personnel, développement perso, études, recherche d'emploi,
+    grand ménage, déplacement, randonnée, travail de nuit, week-end, famille.
+    Une seule touche et ta journée est remplie.</p>
+    <button class="act on" style="width:100%" onclick="feuilleJournees(-1)">Choisir une journée type</button>
+  </div>`;
+  if(!data.routines.length) return entete;
+
+  return entete + data.routines.map((r,i)=>{
+    const enPause = r.actif===false;
+    return `
+  <div class="carte" style="--accent:${teinte(i+2)}; ${enPause?'opacity:.62':''}">
+    <div class="entre" style="margin-bottom:4px">
+      <h2 style="margin:0">${r.emoji} ${prot(r.nom)}</h2>
+      <div class="rangee" style="gap:2px">
+        <button class="suppr" onclick="basculerActif('${r.id}')" aria-label="Pause">${enPause?'▶':'⏸'}</button>
+        <button class="suppr" onclick="supprimerRoutine('${r.id}')" aria-label="Supprimer">×</button>
+      </div>
+    </div>
+    <p class="vide" style="margin:0 0 14px">${r.etapes.length} étapes · ${finRoutine(r)}${enPause?' · en pause':''}</p>
+
+    <div class="rangee" style="gap:6px; margin-bottom:8px">
+      ${JOURS.map(([js,lettre])=>`<button class="pion ${r.jours.includes(js)?'on':''}"
+        onclick="basculerJourRoutine('${r.id}',${js})">${lettre}</button>`).join('')}
+    </div>
+    <div class="rangee" style="margin-bottom:14px">
+      ${[['tous','Tous les jours'],['ouvres','Lun–ven'],['weekend','Week-end'],['aucun','Aucun']]
+        .map(([t,l])=>`<button class="mini" style="padding:6px 10px; font-size:12px"
+          onclick="joursRapides('${r.id}','${t}')">${l}</button>`).join('')}
+    </div>
+
+    ${r.etapes.length ? r.etapes.map((e,j)=>`<div class="tache">
+        <div class="rangee" style="gap:0; flex-direction:column">
+          <button class="fleche" onclick="deplacerEtape('${r.id}','${e.id}',-1)" ${j===0?'disabled':''}>▲</button>
+          <button class="fleche" onclick="deplacerEtape('${r.id}','${e.id}',1)" ${j===r.etapes.length-1?'disabled':''}>▼</button>
+        </div>
+        <button class="txt" onclick="feuilleEtape('${r.id}','${e.id}')">${prot(e.titre)}
+          <span class="meta">${e.heure?e.heure.replace(':','h'):''}
+            <span class="rep">${e.duree||10} min</span></span>
+        </button>
+        <button class="suppr" onclick="supprimerEtape('${r.id}','${e.id}')" aria-label="Retirer">×</button>
+      </div>`).join('')
+      : '<p class="vide">Aucune étape pour l\'instant.</p>'}
+
+    <div class="rangee" style="margin-top:14px">
+      <button class="mini" onclick="feuilleEtape('${r.id}')">+ Étape</button>
+      <button class="mini" onclick="feuilleRoutine('${r.id}')">⚙ Réglages</button>
+    </div>
+    <div class="rangee" style="margin-top:8px">
+      <button class="act on" style="flex:1" onclick="lancerRoutine('${r.id}')" ${r.etapes.length?'':'disabled'}>▶ Dérouler</button>
+      <button class="act" style="flex:1" onclick="appliquerMaintenant('${r.id}')" ${r.etapes.length?'':'disabled'}>Ajouter à ce jour</button>
+    </div>
+    <div class="rangee" style="margin-top:8px">
+      <button class="mini" onclick="appliquerSemaine('${r.id}')">Toute la semaine</button>
+      <button class="mini" onclick="routineCalendrier('${r.id}')">🔔 Calendrier</button>
+      <button class="mini" onclick="dupliquerRoutine('${r.id}')">Dupliquer</button>
+    </div>
+  </div>`;
+  }).join('');
+}
+
+function ecranBilan(){
+  const k = K(), l = log(k), t = taches(k);
+  const hab = data.habitudes.filter(h=>h.jours.includes(k)).length;
+  return `
+  <div class="carte"><h2>La journée en bref</h2>
+    <div class="ligne"><span>Tâches</span><span>${t.filter(x=>x.fait).length}/${t.length}</span></div>
+    <div class="ligne"><span>Habitudes</span><span>${hab}/${data.habitudes.length}</span></div>
+    <div class="ligne"><span>Sommeil</span><span>${fmt(l.sommeil)} h</span></div>
+    <div class="ligne"><span>Eau</span><span>${l.eau} verres</span></div>
+    <div class="ligne"><span>Activité</span><span>${l.sport} min</span></div>
+  </div>
+  <div class="carte" style="--accent:var(--indigo)"><h2>Ce qui s'est passé</h2>
+    <textarea placeholder="Écris librement…" oninput="majTexte('note',this.value)">${prot(l.note)}</textarea>
+    <label class="champ">Une bonne chose du jour</label>
+    <input type="text" placeholder="Même toute petite" value="${prot(l.bonne)}" oninput="majTexte('bonne',this.value)">
+  </div>
+  <div class="carte" style="--accent:var(--or)"><h2>Note de la journée</h2>
+    <div class="etoiles">${[1,2,3,4,5].map(v=>`
+      <button class="${(l.note5||0)>=v?'on':''}" onclick="maj('note5',${l.note5===v?'null':v})">${(l.note5||0)>=v?'★':'☆'}</button>`).join('')}
+    </div></div>`;
+}
+
+/* ---- Rappel de sauvegarde ---- */
+function alerteSauvegarde(){
+  const n = joursDepuisExport();
+  const contenu = data.taches.length + Object.keys(data.logs).length;
+  if(contenu < 8) return '';
+  if(n !== null && n < 14) return '';
+  return `<div class="alerte">
+    ${n===null ? "Tes données ne sont enregistrées que dans ce navigateur. Fais une copie de sauvegarde."
+               : "Dernière sauvegarde il y a "+n+" jours."}
+    <br><button onclick="exporter()">Enregistrer une copie</button></div>`;
+}
+
+/* ---- Mode enchaînement : on déroule la routine étape par étape ---- */
+let chrono = null, resteSecondes = 0;
+
+function lancerRoutine(idRoutine){
+  data.enCours = {routine:idRoutine, index:0, debut:Date.now()};
+  sauver(); afficherEtape(); montrerFeuille();
+}
+function reprendreRoutine(){
+  if(!data.enCours) return;
+  afficherEtape(); montrerFeuille();
+}
+function arreterRoutine(){
+  data.enCours = null; sauver(); clearInterval(chrono); fermerFeuille(); rendre();
+}
+/** Bandeau de reprise si une routine a été laissée en plan. */
+function banniereRoutine(){
+  const c = data.enCours;
+  if(!c) return '';
+  const r = data.routines.find(x=>x.id===c.routine);
+  if(!r || c.index >= r.etapes.length){ data.enCours = null; return ''; }
+  return `<div class="alerte">
+    ${r.emoji} ${prot(r.nom)} en cours — étape ${c.index+1} sur ${r.etapes.length} :
+    ${prot(r.etapes[c.index].titre)}
+    <br><button onclick="reprendreRoutine()">Reprendre</button>
+    <button onclick="arreterRoutine()" style="margin-left:8px; background:none; color:#231607; border:1px solid #231607">Arrêter</button>
+  </div>`;
+}
+function afficherEtape(){
+  const c = data.enCours;
+  if(!c) return;
+  const r = data.routines.find(x=>x.id===c.routine);
+  clearInterval(chrono);
+  if(!r || c.index >= r.etapes.length){
+    document.getElementById('feuille').innerHTML = `
+      <h3>${r ? r.emoji+' '+prot(r.nom) : 'Routine'}</h3>
+      <div class="carte" style="--accent:var(--sauge); text-align:center">
+        <div class="gros" style="margin:14px 0">Routine terminée</div>
+        <p class="vide">${r ? r.etapes.length : 0} étapes enchaînées.</p>
+      </div>
+      <button class="act" style="width:100%" onclick="arreterRoutine()">Fermer</button>`;
+    return;
+  }
+  const e = r.etapes[c.index];
+  const total = (e.duree || 10) * 60;
+  resteSecondes = Math.max(0, total - Math.floor((Date.now() - c.debut)/1000));
+  document.getElementById('feuille').innerHTML = `
+    <h3>${r.emoji} ${prot(r.nom)}</h3>
+    <p class="vide" style="margin-top:-8px">Étape ${c.index+1} sur ${r.etapes.length}</p>
+    <div class="carte" style="--accent:var(--brique); text-align:center">
+      <div class="gros" style="font-size:26px; margin:6px 0 14px">${prot(e.titre)}</div>
+      <div id="chrono" style="font-size:44px; font-weight:600; letter-spacing:-1px">${mmss(resteSecondes)}</div>
+      <div class="barre-p"><span id="jauge" style="width:${Math.min(100,(1-resteSecondes/total)*100)}%"></span></div>
+    </div>
+    <div class="rangee">
+      <button class="act on" style="flex:1" onclick="etapeSuivante()">Étape suivante</button>
+      <button class="mini" onclick="fermerFeuille()">Plus tard</button>
+      <button class="mini" onclick="arreterRoutine()">Arrêter</button>
+    </div>
+    ${r.etapes.map((x,i)=>`<div class="ligne" style="opacity:${i<c.index?.4:1}">
+      <span>${i<c.index?'✓':(i===c.index?'▶':'·')} ${prot(x.titre)}</span>
+      <span>${x.duree||10} min</span></div>`).join('')}`;
+  chrono = setInterval(()=>{
+    resteSecondes--;
+    const ch = document.getElementById('chrono'), j = document.getElementById('jauge');
+    if(!ch){ clearInterval(chrono); return; }
+    ch.textContent = mmss(Math.max(0,resteSecondes));
+    if(j) j.style.width = Math.min(100, (1 - resteSecondes/total)*100)+'%';
+    if(resteSecondes <= 0){
+      clearInterval(chrono);
+      if(navigator.vibrate) navigator.vibrate([200,100,200]);
+      ch.style.color = 'var(--sauge)';
+    }
+  }, 1000);
+}
+function mmss(s){
+  return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+}
+function etapeSuivante(){
+  const c = data.enCours;
+  const r = data.routines.find(x=>x.id===c.routine);
+  const e = r.etapes[c.index], k = K();
+  const t = data.taches.find(x=>x.etape===e.id && x.jour===k);
+  if(t && !t.fait){ t.fait = true; reporterSuivi(t, 1); }
+  c.index++; c.debut = Date.now();
+  sauver(); afficherEtape();
+}
+
+/* ================= Feuilles ================= */
+function feuilleTache(idTache){
+  const t = idTache ? data.taches.find(x=>x.id===idTache) : null;
+  typeChoisi = (t && t.type) || 'aucun';
+  const F = document.getElementById('feuille');
+  F.innerHTML = `
+    <h3>${t ? 'Modifier la tâche' : 'Nouvelle tâche'}</h3>
+    <input type="text" id="nvTitre" placeholder="Par exemple : appeler le médecin" value="${t?prot(t.titre):''}" autocomplete="off">
+    <label class="champ">Heure (facultatif)</label>
+    <input type="time" id="nvHeure" value="${t&&t.heure?t.heure:''}">
+    ${t ? '' : `
+    <label class="champ">Répétition</label>
+    <div class="rangee" id="rep">
+      ${[['non','Une fois'],['quotidien','Chaque jour'],['ouvres','Lun–ven'],['hebdo','Ce jour chaque semaine']]
+        .map((r,i)=>`<button class="mini ${i===0?'on':''}" data-rep="${r[0]}" onclick="choisirRep(this)">${r[1]}</button>`).join('')}
+    </div>`}
+    <label class="champ">Compte comme</label>
+    <div class="rangee" id="typeTache">
+      ${[['aucun','Rien'],['sport','Activité'],['eau',"Verre d'eau"]].map(([v,l])=>
+        `<button class="mini ${((t&&t.type)||'aucun')===v?'on':''}" data-type="${v}" onclick="choisirType(this)">${l}</button>`).join('')}
+    </div>
+    ${t ? `<div class="rangee" style="margin-top:14px">
+      <button class="mini" onclick="reporterDemain('${t.id}')">→ Demain</button>
+      <button class="mini" onclick="dupliquerTache('${t.id}')">Dupliquer</button>
+      ${t.heure ? `<button class="mini" onclick="rappelCalendrier('${t.id}')">🔔 Calendrier</button>` : ''}
+    </div>` : ''}
+    <div class="rangee" style="margin-top:16px">
+      <button class="act" style="flex:1" onclick="${t?`enregistrerTache('${t.id}')`:'ajouterTache()'}">${t?'Enregistrer':'Ajouter'}</button>
+      <button class="mini" onclick="fermerFeuille()">Annuler</button>
+    </div>`;
+  montrerFeuille();
+  if(!t) setTimeout(()=>{ const c=document.getElementById('nvTitre'); if(c) c.focus(); }, 250);
+}
+let repChoisie = 'non', typeChoisi = 'aucun';
+function choisirType(el){
+  typeChoisi = el.dataset.type;
+  [...el.parentNode.children].forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+}
+function choisirRep(el){
+  repChoisie = el.dataset.rep;
+  [...el.parentNode.children].forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+}
+function ajouterTache(){
+  const titre = document.getElementById('nvTitre').value.trim();
+  if(!titre) return;
+  const heure = document.getElementById('nvHeure').value || null;
+  const k = K();
+  if(repChoisie !== 'non'){
+    const m = {id:cleUnique(), titre, heure, repetition:repChoisie, debut:k,
+               jourSemaine:new Date(k+'T12:00:00').getDay()};
+    data.modeles.push(m);
+    data.taches.push({id:cleUnique(), titre, jour:k, heure, fait:false, modele:m.id});
+  }else{
+    data.taches.push({id:cleUnique(), titre, jour:k, heure, fait:false, type:typeChoisi});
+  }
+  repChoisie = 'non'; typeChoisi = 'aucun';
+  sauver(); fermerFeuille(); rendre();
+}
+function enregistrerTache(i){
+  const t = data.taches.find(x=>x.id===i);
+  const titre = document.getElementById('nvTitre').value.trim();
+  if(!titre) return;
+  const etaitFait = t.fait;
+  if(etaitFait) reporterSuivi(t, -1);        // on retire l'ancien report
+  t.titre = titre;
+  t.heure = document.getElementById('nvHeure').value || null;
+  t.ordre = undefined;
+  t.type = typeChoisi;
+  if(etaitFait) reporterSuivi(t, 1);         // et on applique le nouveau
+  if(t.modele){
+    const m = data.modeles.find(x=>x.id===t.modele);
+    if(m && confirm("Appliquer aussi aux jours suivants ?")){ m.titre=t.titre; m.heure=t.heure; }
+  }
+  sauver(); fermerFeuille(); rendre();
+}
+
+let emojiRoutine = '🌅';
+function feuilleRoutine(idRoutine){
+  const r = idRoutine ? data.routines.find(x=>x.id===idRoutine) : null;
+  emojiRoutine = r ? r.emoji : '🌅';
+  const choix = ['🌅','🌙','💼','🏠','🧺','🏋️','📚','🍳','🚿','🧠','⚡️','🧸'];
+  document.getElementById('feuille').innerHTML = `
+    <h3>${r ? 'Réglages de la routine' : 'Nouvelle routine'}</h3>
+    <input type="text" id="nvRoutine" placeholder="Par exemple : soirée calme" value="${r?prot(r.nom):''}" autocomplete="off">
+    <label class="champ">Heure de départ (facultatif)</label>
+    <input type="time" id="nvDepart" value="${r&&r.depart?r.depart:''}">
+    <p class="vide" style="margin-top:6px">Avec une heure de départ, les étapes s'enchaînent
+    automatiquement selon leur durée. Sans, elles n'ont pas d'horaire.</p>
+    <label class="champ">Symbole</label>
+    <div class="emojis">${choix.map(e=>`<button class="${e===emojiRoutine?'on':''}" onclick="choisirEmojiRoutine(this,'${e}')">${e}</button>`).join('')}</div>
+    <div class="rangee" style="margin-top:16px">
+      <button class="act" style="flex:1" onclick="${r?`enregistrerRoutine('${r.id}')`:'ajouterRoutine()'}">${r?'Enregistrer':'Créer'}</button>
+      <button class="mini" onclick="fermerFeuille()">Annuler</button>
+    </div>`;
+  montrerFeuille();
+  if(!r) setTimeout(()=>{ const c=document.getElementById('nvRoutine'); if(c) c.focus(); }, 250);
+}
+function choisirEmojiRoutine(el,e){
+  emojiRoutine = e;
+  [...el.parentNode.children].forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+}
+function ajouterRoutine(){
+  const nom = document.getElementById('nvRoutine').value.trim();
+  if(!nom) return;
+  data.routines.push({id:cleUnique(), nom, emoji:emojiRoutine, jours:[], actif:true,
+                      depart:document.getElementById('nvDepart').value || null, etapes:[]});
+  sauver(); fermerFeuille(); rendre();
+}
+function enregistrerRoutine(idRoutine){
+  const r = data.routines.find(x=>x.id===idRoutine);
+  const nom = document.getElementById('nvRoutine').value.trim();
+  if(!nom) return;
+  r.nom = nom; r.emoji = emojiRoutine;
+  r.depart = document.getElementById('nvDepart').value || null;
+  recalculerHeures(r);
+  sauver(); fermerFeuille(); rendre();
+}
+
+let categorieVue = "Matin", rechercheBiblio = "";
+function ligneBiblio(b,i){
+  return `<div class="entre" style="padding:11px 0; border-top:1px solid var(--trait)">
+    <div style="min-width:0"><div style="font-size:15px">${b.emoji} ${b.nom}</div>
+    <div class="vide" style="margin:2px 0 0">${b.cat} · ${b.etapes.length} étapes · ${b.etapes.reduce((a,e)=>a+e[1],0)} min${b.depart?' · départ '+b.depart.replace(':','h'):''}</div>
+    <div class="vide" style="margin:2px 0 0; font-size:12px">${b.etapes.map(e=>e[0]).join(' → ')}</div></div>
+    <button class="mini" onclick="ajouterDeBiblio(${i})">Ajouter</button>
+  </div>`;
+}
+function listerBiblio(){
+  const q = rechercheBiblio.trim().toLowerCase();
+  const liste = BIBLIO.map((b,i)=>({b,i})).filter(({b})=> q
+    ? (b.nom+' '+b.cat+' '+b.etapes.map(e=>e[0]).join(' ')).toLowerCase().includes(q)
+    : b.cat===categorieVue);
+  const zone = document.getElementById('listeBiblio');
+  if(zone) zone.innerHTML = liste.length
+    ? liste.map(({b,i})=>ligneBiblio(b,i)).join('')
+    : '<p class="vide" style="padding-top:14px">Rien trouvé pour cette recherche.</p>';
+}
+function chercherBiblio(v){ rechercheBiblio = v; listerBiblio(); }
+async function feuilleBibliotheque(cat){
+  if(!await chargerCatalogue()) return;
+  if(cat){ categorieVue = cat; rechercheBiblio = ""; }
+  const cats = [...new Set(BIBLIO.map(b=>b.cat))];
+  document.getElementById('feuille').innerHTML = `
+    <h3>Modèles de routines</h3>
+    <p class="vide">${BIBLIO.length} routines prêtes à l'emploi. Ajoute, puis adapte.</p>
+    <input type="text" placeholder="Chercher : sport, mail, lecture…" value="${prot(rechercheBiblio)}"
+      oninput="chercherBiblio(this.value)" autocomplete="off">
+    <div class="rangee" style="gap:6px; margin:10px 0 0">
+      ${cats.map(c=>`<button class="mini ${c===categorieVue?'on':''}" style="padding:7px 11px; font-size:12px"
+        onclick="feuilleBibliotheque('${c}')">${c}</button>`).join('')}
+    </div>
+    <div id="listeBiblio"></div>
+    <button class="mini" style="width:100%; margin-top:16px" onclick="fermerFeuille()">Fermer</button>`;
+  montrerFeuille();
+  listerBiblio();
+}
+function ajouterDeBiblio(i){
+  const b = BIBLIO[i];
+  const r = {id:cleUnique(), nom:b.nom, emoji:b.emoji, jours:[], actif:true, depart:b.depart,
+             etapes:b.etapes.map(([titre,duree])=>({id:cleUnique(), titre, duree, heure:null}))};
+  recalculerHeures(r);
+  data.routines.push(r);
+  sauver(); fermerFeuille(); rendre();
+}
+
+/* ---- Journées types ---- */
+function fabriquerJournee(j){
+  const r = {id:cleUnique(), nom:j.nom, emoji:j.emoji, jours:[], actif:true, depart:j.depart,
+             etapes:j.etapes.map(([titre,duree])=>({id:cleUnique(), titre, duree, heure:null}))};
+  recalculerHeures(r);
+  return r;
+}
+let rechercheJournee = "";
+function chercherJournee(v){ rechercheJournee = v; feuilleJournees(-1, true); }
+async function feuilleJournees(indexOuvert, garderRecherche){
+  if(!await chargerCatalogue()) return;
+  const q = rechercheJournee.trim().toLowerCase();
+  const retenues = JOURNEES.map((j,i)=>({j,i})).filter(({j})=> !q ||
+    (j.nom+' '+j.resume+' '+j.etapes.map(e=>e[0]).join(' ')).toLowerCase().includes(q));
+  document.getElementById('feuille').innerHTML = `
+    <h3>Journées types</h3>
+    <p class="vide">${JOURNEES.length} journées complètes, du réveil au coucher.
+    Appuie sur un modèle pour voir son déroulé.</p>
+    <input type="text" placeholder="Chercher : sport, enfants, ménage…" value="${prot(rechercheJournee)}"
+      oninput="chercherJournee(this.value)" autocomplete="off">
+    <div style="height:10px"></div>
+    ${retenues.length ? retenues.map(({j,i})=>{
+      const total = j.etapes.reduce((a,e)=>a+e[1],0);
+      const ouvert = indexOuvert === i;
+      const apercu = fabriquerJournee(j);
+      return `<div class="carte" style="--accent:${teinte(i)}; padding:14px">
+        <button class="txt" style="width:100%" onclick="feuilleJournees(${ouvert?-1:i})">
+          <span style="font-size:15px">${j.emoji} ${j.nom}</span>
+          <span class="meta">${j.depart.replace(':','h')} · ${Math.round(total/60)} h · ${j.etapes.length} blocs</span>
+        </button>
+        <p class="vide" style="margin:8px 0 0">${j.resume}</p>
+        ${ouvert ? `<div style="margin-top:10px">${apercu.etapes.map(e=>`
+          <div class="ligne"><span>${e.heure.replace(':','h')}  ${prot(e.titre)}</span><span>${e.duree} min</span></div>`).join('')}
+          <div class="rangee" style="margin-top:12px">
+            <button class="act on" style="flex:1" onclick="appliquerJournee(${i})">Remplir ce jour</button>
+            <button class="mini" onclick="journeeEnRoutine(${i})">En faire une routine</button>
+          </div>` : ''}
+      </div>`;
+    }).join('') : '<p class="vide">Aucune journée ne correspond.</p>'}
+    <button class="mini" style="width:100%" onclick="fermerFeuille()">Fermer</button>`;
+  montrerFeuille();
+}
+/** Crée les tâches de la journée type sur le jour affiché. */
+function appliquerJournee(i){
+  const modele = fabriquerJournee(JOURNEES[i]), k = K();
+  modele.etapes.forEach(e=>{
+    data.taches.push({id:cleUnique(), titre:e.titre, jour:k, heure:e.heure, duree:e.duree, fait:false});
+  });
+  sauver(); fermerFeuille();
+  onglet = 'journee'; window.scrollTo(0,0); rendre();
+}
+/** Garde la journée type comme routine réutilisable. */
+function journeeEnRoutine(i){
+  data.routines.push(fabriquerJournee(JOURNEES[i]));
+  sauver(); fermerFeuille(); rendre();
+}
+
+function feuilleEtape(idRoutine, idEtape){
+  const r = data.routines.find(x=>x.id===idRoutine);
+  const e = idEtape ? r.etapes.find(x=>x.id===idEtape) : null;
+  document.getElementById('feuille').innerHTML = `
+    <h3>${e ? 'Modifier l\'étape' : 'Nouvelle étape'}</h3>
+    <input type="text" id="nvEtape" placeholder="Par exemple : préparer le sac" value="${e?prot(e.titre):''}" autocomplete="off">
+    <label class="champ">Durée</label>
+    <div class="rangee" id="durees">
+      ${[5,10,15,20,30,45,60].map(d=>`<button class="mini ${((e&&e.duree)||10)===d?'on':''}" data-duree="${d}" onclick="choisirDuree(this)">${d} min</button>`).join('')}
+    </div>
+    <label class="champ">Compte comme</label>
+    <div class="rangee" id="typeEtapeChoix">
+      ${[['aucun','Rien'],['sport','Activité'],['eau',"Verre d'eau"]].map(([v,l])=>
+        `<button class="mini ${((e&&e.type)||typeEtape(e?e.titre:'')||'aucun')===v?'on':''}" data-type="${v}" onclick="choisirType(this)">${l}</button>`).join('')}
+    </div>
+    ${r.depart ? '<p class="vide" style="margin-top:10px">L\'heure est calculée automatiquement à partir du départ de la routine.</p>'
+      : `<label class="champ">Heure (facultatif)</label>
+         <input type="time" id="nvEtapeHeure" value="${e&&e.heure?e.heure:''}">`}
+    <div class="rangee" style="margin-top:16px">
+      <button class="act" style="flex:1" onclick="${e?`enregistrerEtape('${r.id}','${e.id}')`:`ajouterEtape('${r.id}')`}">${e?'Enregistrer':'Ajouter'}</button>
+      <button class="mini" onclick="fermerFeuille()">Annuler</button>
+    </div>`;
+  dureeChoisie = (e && e.duree) || 10;
+  typeChoisi = (e && e.type) || typeEtape(e ? e.titre : '') || 'aucun';
+  montrerFeuille();
+  if(!e) setTimeout(()=>{ const c=document.getElementById('nvEtape'); if(c) c.focus(); }, 250);
+}
+let dureeChoisie = 10;
+function choisirDuree(el){
+  dureeChoisie = +el.dataset.duree;
+  [...el.parentNode.children].forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+}
+function ajouterEtape(idRoutine){
+  const titre = document.getElementById('nvEtape').value.trim();
+  if(!titre) return;
+  const r = data.routines.find(x=>x.id===idRoutine);
+  const champHeure = document.getElementById('nvEtapeHeure');
+  r.etapes.push({id:cleUnique(), titre, duree:dureeChoisie, type:typeChoisi,
+                 heure: champHeure ? (champHeure.value || null) : null});
+  recalculerHeures(r);
+  sauver(); fermerFeuille(); rendre();
+}
+function enregistrerEtape(idRoutine, idEtape){
+  const r = data.routines.find(x=>x.id===idRoutine);
+  const e = r.etapes.find(x=>x.id===idEtape);
+  const titre = document.getElementById('nvEtape').value.trim();
+  if(!titre) return;
+  e.titre = titre; e.duree = dureeChoisie; e.type = typeChoisi;
+  const champHeure = document.getElementById('nvEtapeHeure');
+  if(champHeure) e.heure = champHeure.value || null;
+  recalculerHeures(r);
+  sauver(); fermerFeuille(); rendre();
+}
+
+let emojiChoisi = '⭐️';
+let categorieHabitude = "Corps", rechercheHabitude = "";
+function estDejaSuivie(nom){ return data.habitudes.some(h=>h.nom===nom); }
+function listerHabitudes(){
+  const q = rechercheHabitude.trim().toLowerCase();
+  let liste = [];
+  HABITUDES.forEach(([cat, items])=>items.forEach(([emoji,nom])=>{
+    if(q ? (nom+' '+cat).toLowerCase().includes(q) : cat===categorieHabitude)
+      liste.push({cat, emoji, nom});
+  }));
+  const zone = document.getElementById('listeHabitudes');
+  if(!zone) return;
+  zone.innerHTML = liste.length ? liste.map(o=>{
+    const deja = estDejaSuivie(o.nom);
+    return `<div class="entre" style="padding:10px 0; border-top:1px solid var(--trait)">
+      <span style="font-size:15px">${o.emoji} ${o.nom}</span>
+      <button class="mini ${deja?'on':''}" onclick="ajouterSuggestion('${prot(o.nom).replace(/'/g,"\\'")}','${o.emoji}')"
+        ${deja?'disabled':''}>${deja?'✓ suivie':'Ajouter'}</button>
+    </div>`;
+  }).join('') : '<p class="vide" style="padding-top:14px">Rien trouvé.</p>';
+}
+function chercherHabitude(v){ rechercheHabitude = v; listerHabitudes(); }
+async function feuilleSuggestions(cat){
+  if(!await chargerCatalogue()) return;
+  if(cat){ categorieHabitude = cat; rechercheHabitude = ""; }
+  const total = HABITUDES.reduce((a,[,items])=>a+items.length,0);
+  document.getElementById('feuille').innerHTML = `
+    <h3>Habitudes proposées</h3>
+    <p class="vide">${total} idées. Appuie sur Ajouter, tu pourras les modifier ensuite.</p>
+    <input type="text" placeholder="Chercher : eau, lecture, sport…" value="${prot(rechercheHabitude)}"
+      oninput="chercherHabitude(this.value)" autocomplete="off">
+    <div class="rangee" style="gap:6px; margin:10px 0 0">
+      ${HABITUDES.map(([c])=>`<button class="mini ${c===categorieHabitude?'on':''}" style="padding:7px 11px; font-size:12px"
+        onclick="feuilleSuggestions('${c}')">${c}</button>`).join('')}
+    </div>
+    <div id="listeHabitudes"></div>
+    <div class="rangee" style="margin-top:16px">
+      <button class="act" style="flex:1" onclick="feuilleHabitude()">Créer la mienne</button>
+      <button class="mini" onclick="fermerFeuille()">Fermer</button>
+    </div>`;
+  montrerFeuille();
+  listerHabitudes();
+}
+function ajouterSuggestion(nom, emoji){
+  if(estDejaSuivie(nom)) return;
+  data.habitudes.push({id:cleUnique(), nom, emoji, jours:[]});
+  sauver(); listerHabitudes(); rendre();
+}
+
+function feuilleHabitude(){
+  emojiChoisi = '⭐️';
+  const choix = ['⭐️','🏃','📖','💧','🧘','🎸','🌙','🥗','☎️','✍️','🧹','💊'];
+  document.getElementById('feuille').innerHTML = `
+    <h3>Nouvelle habitude</h3>
+    <input type="text" id="nvHabitude" placeholder="Par exemple : marcher 30 minutes" autocomplete="off">
+    <label class="champ">Symbole</label>
+    <div class="emojis">${choix.map(e=>`<button class="${e===emojiChoisi?'on':''}" onclick="choisirEmoji(this,'${e}')">${e}</button>`).join('')}</div>
+    <div class="rangee" style="margin-top:16px">
+      <button class="act" style="flex:1" onclick="ajouterHabitude()">Ajouter</button>
+      <button class="mini" onclick="fermerFeuille()">Annuler</button>
+    </div>`;
+  montrerFeuille();
+  setTimeout(()=>{ const c=document.getElementById('nvHabitude'); if(c) c.focus(); }, 250);
+}
+function choisirEmoji(el,e){
+  emojiChoisi = e;
+  [...el.parentNode.children].forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+}
+function ajouterHabitude(){
+  const nom = document.getElementById('nvHabitude').value.trim();
+  if(!nom) return;
+  data.habitudes.push({id:cleUnique(), nom, emoji:emojiChoisi, jours:[]});
+  sauver(); fermerFeuille(); rendre();
+}
+
+function feuilleReglages(){
+  const n = joursDepuisExport();
+  const recurrentes = data.modeles.length;
+  document.getElementById('feuille').innerHTML = `
+    <h3>Réglages</h3>
+    <div class="carte">
+      <h2>Sauvegarde</h2>
+      <p class="vide">${n===null ? "Aucune copie enregistrée pour l'instant." : "Dernière copie il y a "+n+" jours."}
+      Le fichier obtenu se range dans Fichiers ou s'envoie où tu veux.</p>
+      <div class="rangee">
+        <button class="act" onclick="exporter()">Enregistrer une copie</button>
+        <button class="mini" onclick="document.getElementById('fichierImport').click()">Restaurer</button>
+      </div>
+      <p class="vide" style="margin:12px 0 6px">L'app garde aussi une copie interne, refaite
+      chaque semaine, au cas où quelque chose tournerait mal.
+      ${dateSecours() ? 'Copie du '+dateSecours()+'.' : 'Pas encore de copie interne.'}</p>
+      ${dateSecours() ? '<button class="mini" onclick="restaurerSecours()">Revenir à la copie interne</button>' : ''}
+    </div>
+    <div class="carte">
+      <h2>Tâches récurrentes (${recurrentes})</h2>
+      ${recurrentes ? data.modeles.map(m=>`<div class="entre" style="padding:7px 0">
+        <span>${prot(m.titre)} <span class="serie">${etiquetteRep(m)}</span></span>
+        <button class="suppr" onclick="supprimerModele('${m.id}')">×</button></div>`).join('')
+        : '<p class="vide">Aucune. Coche une répétition en créant une tâche.</p>'}
+    </div>
+    <div class="carte">
+      <h2>App Santé de l'iPhone</h2>
+      <p class="vide">Une app web ne peut pas lire l'app Santé directement. Le pont se fait avec
+      l'app <b>Raccourcis</b> : un raccourci lit tes pas, ton sommeil et tes minutes d'exercice,
+      puis ouvre Ma journée avec ces valeurs. Recopie cette adresse dans l'action « Ouvrir une URL » :</p>
+      <textarea readonly style="min-height:70px; font-size:13px">${adresseRaccourci()}</textarea>
+      <p class="vide" style="margin-top:8px">Remplace chaque 0 par la valeur lue dans Santé, et la date
+      par celle du jour. Programme le raccourci en automatisation quotidienne du soir.
+      ${data.vu.sante ? 'Dernière réception : '+data.vu.sante+'.' : ''}</p>
+    </div>
+    <div class="carte">
+      <h2>Strava</h2>
+      <p class="vide">Strava n'autorise pas de connexion directe depuis une app comme celle-ci.
+      Passe par l'export : sur strava.com, Réglages → Mon compte → Télécharger mes données.
+      Tu reçois une archive contenant <b>activities.csv</b>.</p>
+      <button class="mini" onclick="document.getElementById('fichierStrava').click()">Importer activities.csv</button>
+      <p class="vide" style="margin-top:8px">Les durées de tes sorties remplissent les minutes
+      d'activité, jour par jour.</p>
+    </div>
+    <div class="carte">
+      <h2>Zone sensible</h2>
+      <button class="mini" onclick="toutEffacer()">Effacer toutes les données</button>
+    </div>
+    <button class="mini" style="width:100%" onclick="fermerFeuille()">Fermer</button>`;
+  montrerFeuille();
+}
+function etiquetteRoutine(idRoutine){
+  const r = data.routines.find(x=>x.id===idRoutine);
+  return r ? prot(r.emoji+' '+r.nom) : 'routine';
+}
+function etiquetteRep(m){
+  if(m.repetition==='quotidien') return 'chaque jour';
+  if(m.repetition==='ouvres') return 'du lundi au vendredi';
+  const j = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'][m.jourSemaine];
+  return 'chaque '+j;
+}
+function supprimerModele(i){
+  if(!confirm("Arrêter cette répétition ? Les tâches déjà créées restent en place.")) return;
+  data.modeles = data.modeles.filter(m=>m.id!==i);
+  sauver(); feuilleReglages(); rendre();
+}
+
+function montrerFeuille(){
+  document.getElementById('fond').classList.add('on');
+  document.getElementById('feuille').classList.add('on');
+}
+function fermerFeuille(){
+  clearInterval(chrono); chrono = null;
+  if(data.enCours) rendre();
+  document.getElementById('fond').classList.remove('on');
+  document.getElementById('feuille').classList.remove('on');
+}
+
+/* ================= Rendu ================= */
+function prot(s){
+  return String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+function fmt(n){ return Number(n).toFixed(1).replace('.',','); }
+
+function rendre(){
+  const y = window.scrollY;
+  document.getElementById('titreJour').textContent = libelle(jour);
+  document.getElementById('retourJour').hidden = estAujourdhui(jour);
+  document.body.dataset.onglet = onglet;
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on', b.dataset.onglet===onglet));
+  const ecrans = {journee:ecranJournee, routine:ecranRoutine, habitudes:ecranHabitudes,
+                  suivi:ecranSuivi, semaine:ecranSemaine, bilan:ecranBilan};
+  document.getElementById('ecran').innerHTML = ecrans[onglet]();
+  window.scrollTo(0, y);   // on ne repart pas en haut de la liste
+}
+lireParametres();
+rendre();
+
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
