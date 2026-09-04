@@ -1,0 +1,19 @@
+{
+  "name": "Ma journée",
+  "short_name": "Ma journée",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fbfbf9",
+  "theme_color": "#fbfbf9",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23223046'/%3E%3Ccircle cx='256' cy='216' r='94' fill='%234f7b5e'/%3E%3Crect x='136' y='358' width='240' height='30' rx='15' fill='%23de8747'/%3E%3C/svg%3E",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
